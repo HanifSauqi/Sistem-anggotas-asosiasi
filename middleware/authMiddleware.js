@@ -1,15 +1,19 @@
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
-    const token = req.header('Authorization');
-    if (!token) return res.status(401).json({ message: 'Akses Ditolak' });
-
     try {
+        const authHeader = req.header('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Akses ditolak, token tidak ditemukan' });
+        }
+
+        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
+
         next();
     } catch (err) {
-        res.status(401).json({ message: 'Token tidak valid' });
+        return res.status(403).json({ message: 'Token tidak valid atau kedaluwarsa' });
     }
 };
 
